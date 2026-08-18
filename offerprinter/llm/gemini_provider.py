@@ -24,6 +24,13 @@ class GeminiProvider(LLMProvider):
             },
         }
         data = self._post(url, headers, payload)
+
+        usage = data.get("usageMetadata") or {}
+        self._record_usage(
+            int(usage.get("promptTokenCount", 0)),
+            int(usage.get("candidatesTokenCount", 0)),
+        )
+
         try:
             parts = data["candidates"][0]["content"]["parts"]
             return "".join(p.get("text", "") for p in parts)

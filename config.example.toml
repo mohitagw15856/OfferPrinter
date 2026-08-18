@@ -1,72 +1,80 @@
-# =============================================================================
-# OfferPrinter configuration
-# -----------------------------------------------------------------------------
-# Copy this file to `config.toml` and edit. Every setting here can ALSO be set
-# via an environment variable (see comments), and env vars win over the file.
+# OfferPrinter configuration.
 #
-# The only thing you MUST provide is an API key for your chosen provider.
-# Everything else has a sensible default that runs out of the box.
-# =============================================================================
+#   cp config.example.toml config.toml
+#
+# Precedence (highest wins): environment variables → config.toml → defaults.
+# The only thing you MUST provide is an API key — and not even that if you run
+# a local model with the `ollama` provider.
+#
+# config.toml is git-ignored, so it is safe to keep your key here.
 
 [llm]
-# Which provider to use. One of: "anthropic", "openai", "gemini", "kimi".
-# Switching provider is a one-line change here (or set OFFERPRINTER_PROVIDER).
-# Env var: OFFERPRINTER_PROVIDER
+# Which provider to call.
+#   anthropic | openai | gemini | kimi | ollama          (env: OFFERPRINTER_PROVIDER)
 provider = "anthropic"
 
-# The model to call. Leave blank ("") to use each provider's sensible default
-# (the cheapest capable model — see the table below).
-#   anthropic default : claude-haiku-4-5-20251001   (fast + cheap)
-#   openai    default : gpt-4o-mini
-#   gemini    default : gemini-1.5-flash
-#   kimi      default : moonshot-v1-8k
-# Env var: OFFERPRINTER_MODEL
-model = ""
+# Leave blank to use the provider's default model, which is always the
+# cheapest capable one:
+#   anthropic → claude-haiku-4-5-20251001
+#   openai    → gpt-4o-mini
+#   gemini    → gemini-1.5-flash
+#   kimi      → moonshot-v1-8k
+#   ollama    → llama3.1               (runs on your machine, costs nothing)
+model = ""                                             # env: OFFERPRINTER_MODEL
 
-# Your API key. STRONGLY prefer setting this via an environment variable rather
-# than committing it to a file. If left blank, OfferPrinter reads the standard
-# per-provider env var instead:
-#   anthropic -> ANTHROPIC_API_KEY
-#   openai    -> OPENAI_API_KEY
-#   gemini    -> GEMINI_API_KEY  (or GOOGLE_API_KEY)
-#   kimi      -> MOONSHOT_API_KEY
-# Env var (overrides all of the above): OFFERPRINTER_API_KEY
-api_key = ""
+# Prefer the standard per-provider environment variable (ANTHROPIC_API_KEY,
+# OPENAI_API_KEY, GEMINI_API_KEY, MOONSHOT_API_KEY) over putting a key here.
+api_key = ""                                           # env: OFFERPRINTER_API_KEY
 
-# Optional: override the provider's API base URL (e.g. for a proxy or a
-# self-hosted OpenAI-compatible gateway). Leave blank for the official endpoint.
-# Env var: OFFERPRINTER_BASE_URL
-base_url = ""
+# Point at a proxy, gateway, or any OpenAI-compatible endpoint. Leave blank
+# for the provider's own API. For a local LM Studio / llama.cpp server, set
+# provider = "openai" and base_url = "http://localhost:1234".
+base_url = ""                                          # env: OFFERPRINTER_BASE_URL
 
-# Sampling temperature. Lower = more faithful/deterministic, which is what we
-# want for a no-fabrication tool. Range 0.0–1.0.
-temperature = 0.2
-
-# Max tokens to generate per artifact. Raise if your CV/JD are very long.
+temperature = 0.2      # low = faithful and deterministic; this is a features, not a bug
 max_tokens = 4096
+timeout = 120          # seconds per call
 
-# Request timeout in seconds.
-timeout = 120
-
+# A single rate limit should not kill a five-document run. Failed calls are
+# retried with exponential backoff, honouring the server's Retry-After header.
+max_retries = 3
+retry_backoff = 1.5    # seconds for the first retry; doubles each attempt
 
 [output]
-# British English by default. Set to "US" for American spelling/idiom.
-# Accepted: "UK", "US".
-# Env var: OFFERPRINTER_LOCALE
-locale = "UK"
+locale = "UK"          # UK | US                        (env: OFFERPRINTER_LOCALE)
+dir = "./output"       # where packages are written     (env: OFFERPRINTER_OUTPUT_DIR)
 
-# Where generated packages are written. A subfolder <company>-<role>/ is created
-# per run. Env var: OFFERPRINTER_OUTPUT_DIR
-dir = "./output"
+# Which file formats to write. Any of: "md", "docx", "pdf".
+# PDFs are generated in plain Helvetica with real selectable text, which is
+# exactly what an ATS wants.
+formats = ["md", "docx", "pdf"]                        # env: OFFERPRINTER_FORMATS
 
-# Which file formats to write. "md" and "docx" are supported.
-formats = ["md", "docx"]
-
+# Record each run in ~/.offerprinter/applications.json so `offerprinter list`
+# and `offerprinter stats` can show your history. Purely local; delete the
+# file any time. Set false to keep no history at all.
+track = true                                           # env: OFFERPRINTER_TRACK
 
 [generation]
-# Which of the five artifacts to produce. Turn any off to save tokens/time.
+# Turn any artifact off to spend fewer tokens.
 tailored_cv = true
 cover_letter = true
 fit_memo = true
 ats_report = true
 interview_prep = true
+
+# One extra cheap call that scores the match 0-100 and bands it, strictly on
+# evidence in your CV. It is the fastest way to decide whether a role is worth
+# your evening.
+fit_score = true
+
+# Generate all artifacts concurrently. They are independent of each other, so
+# this makes a full run about as slow as its slowest single document rather
+# than the sum of all of them. Set false if your provider rate-limits hard.
+parallel = true                                        # env: OFFERPRINTER_PARALLEL
+max_workers = 5
+
+# Optional. Cost reporting uses published list prices, which change and may not
+# match your account. Override any model here, in USD per 1,000,000 tokens.
+# [pricing]
+# "claude-haiku-4-5-20251001" = { input = 1.0, output = 5.0 }
+# "my-companys-proxy-model"   = { input = 0.0, output = 0.0 }

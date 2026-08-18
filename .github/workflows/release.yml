@@ -1,0 +1,138 @@
+name: Release
+
+# Everything that has to happen when a version tag is pushed:
+#   1. build the wheel + sdist
+#   2. publish to PyPI (trusted publishing — no API token stored anywhere)
+#   3. build standalone binaries for macOS, Linux and Windows
+#   4. attach every artifact to the GitHub Release
+#
+#   git tag v0.2.0 && git push origin v0.2.0
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build wheel + sdist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build
+        run: |
+          pip install build twine
+          python -m build
+          twine check dist/*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  pypi:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/offerprinter
+    permissions:
+      # Required for PyPI trusted publishing. No password or token needed —
+      # configure the publisher once at https://pypi.org/manage/account/publishing/
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  binaries:
+    name: Standalone binary (${{ matrix.label }})
+    needs: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            label: linux-x86_64
+            artifact: offerprinter
+          - os: macos-latest
+            label: macos-arm64
+            artifact: offerprinter
+          - os: windows-latest
+            label: windows-x86_64
+            artifact: offerprinter.exe
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: |
+          pip install -e .
+          pip install pyinstaller
+
+      - name: Build binary
+        run: pyinstaller packaging/pyinstaller/offerprinter.spec --noconfirm --clean
+
+      - name: Smoke test the binary
+        shell: bash
+        run: ./dist/${{ matrix.artifact }} --version
+
+      - name: Package
+        shell: bash
+        run: |
+          mkdir -p release
+          cp dist/${{ matrix.artifact }} release/
+          cp README.md LICENSE release/
+          cd release
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            7z a ../offerprinter-${{ matrix.label }}.zip ./*
+          else
+            tar -czf ../offerprinter-${{ matrix.label }}.tar.gz ./*
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.label }}
+          path: offerprinter-${{ matrix.label }}.*
+
+  attach:
+    name: Attach everything to the release
+    needs: [build, binaries]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Flatten
+        run: |
+          mkdir -p upload
+          find artifacts -type f \( -name '*.whl' -o -name '*.tar.gz' -o -name '*.zip' \) \
+            -exec cp {} upload/ \;
+          ls -la upload
+
+      - name: Upload to the GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: upload/*
+          fail_on_unmatched_files: false

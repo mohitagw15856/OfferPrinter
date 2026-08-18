@@ -17,6 +17,11 @@ venv/
 env/
 .python-version
 
+# --- Packaging / release ---
+*.spec.bak
+release/
+# (dist/ and build/ are already ignored under Python, above)
+
 # --- Tooling ---
 .ruff_cache/
 .pytest_cache/

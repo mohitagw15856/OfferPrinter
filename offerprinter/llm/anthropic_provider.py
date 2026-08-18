@@ -27,6 +27,13 @@ class AnthropicProvider(LLMProvider):
             "messages": [{"role": "user", "content": user}],
         }
         data = self._post(url, headers, payload)
+
+        usage = data.get("usage") or {}
+        self._record_usage(
+            int(usage.get("input_tokens", 0)),
+            int(usage.get("output_tokens", 0)),
+        )
+
         try:
             blocks = data["content"]
             return "".join(b.get("text", "") for b in blocks if b.get("type") == "text")

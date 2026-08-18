@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 💬 Questions and ideas
+    url: https://github.com/mohitagw15856/OfferPrinter/discussions
+    about: Ask how something works, or float an idea before building it.
+  - name: 🔒 Report a security vulnerability
+    url: https://github.com/mohitagw15856/OfferPrinter/security/advisories/new
+    about: Please report security issues privately, not as a public issue.
+  - name: 📖 Read the docs
+    url: https://github.com/mohitagw15856/OfferPrinter#readme
+    about: Installation, configuration, providers, and the FAQ.

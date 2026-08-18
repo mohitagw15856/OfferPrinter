@@ -1,0 +1,63 @@
+name: ✨ Feature request
+description: Suggest something OfferPrinter should do
+title: "[feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Good feature requests usually start with a real moment in a real job
+        hunt. Tell us about that moment.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's the problem?
+      description: What were you trying to do when you wished this existed?
+      placeholder: I was applying to 12 roles in a week and…
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: What should OfferPrinter do?
+      description: Describe the feature. A sketch of the command or UI helps.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of the tool?
+      options:
+        - A new generated artifact
+        - Prompt / output quality
+        - CLI
+        - Web UI
+        - A new LLM provider
+        - A new output format
+        - Job description fetching
+        - Packaging / installation
+        - Tracking and stats
+        - Something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Anything you tried instead?
+      description: Workarounds, other tools, manual steps.
+
+  - type: checkboxes
+    id: guarantee
+    attributes:
+      label: The no-fabrication guarantee
+      description: >-
+        OfferPrinter never invents experience, skills, employers, dates or
+        metrics. Features that would make it easier to imply experience the
+        candidate doesn't have will be declined.
+      options:
+        - label: This feature is compatible with the no-fabrication guarantee.
+          required: true

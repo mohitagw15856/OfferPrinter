@@ -10,7 +10,9 @@ from offerprinter.prompts.templates import (
     COVER_LETTER_PROMPT,
     EXTRACT_META_PROMPT,
     FIT_MEMO_PROMPT,
+    FIT_SCORE_PROMPT,
     INTERVIEW_PREP_PROMPT,
+    ROAST_PROMPT,
     SYSTEM_RULES,
     TAILORED_CV_PROMPT,
     build_system,
@@ -25,4 +27,6 @@ __all__ = [
     "FIT_MEMO_PROMPT",
     "ATS_REPORT_PROMPT",
     "INTERVIEW_PREP_PROMPT",
+    "FIT_SCORE_PROMPT",
+    "ROAST_PROMPT",
 ]

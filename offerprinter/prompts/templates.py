@@ -258,3 +258,82 @@ about the role, team, or company — showing genuine engagement, not generic.
 --- TARGET JOB DESCRIPTION ---
 {jd}
 --- END JOB DESCRIPTION ---"""
+
+
+# ---------------------------------------------------------------------------
+# 6. Fit score — a single number, so a run ends with a verdict, not a shrug.
+# ---------------------------------------------------------------------------
+
+FIT_SCORE_PROMPT = """Score how well this candidate genuinely matches the role of \
+{role} at {company}.
+
+Scoring guide (be strict and evidence-based — an inflated score is useless):
+- 85-100: meets essentially every requirement with direct, demonstrated evidence.
+- 70-84: meets most requirements including the critical ones; one or two soft gaps.
+- 55-69: meets roughly half; credible but with real gaps on secondary requirements.
+- 40-54: meets a minority; a genuine stretch with gaps on important requirements.
+- 0-39: missing most requirements, including critical ones.
+
+Judge ONLY on evidence actually present in the CV. Absence of evidence is a gap, \
+not a maybe. Do not be generous to be kind — the candidate needs the truth to \
+decide where to spend their evening.
+
+Return ONLY this exact block, nothing else, no code fences, no commentary:
+
+SCORE: <integer 0-100>
+STRENGTHS: <requirement they genuinely meet> ; <another> ; <another>
+GAPS: <requirement they genuinely do not meet> ; <another>
+
+Give 2-4 strengths and 0-4 gaps, each a short phrase of at most 12 words, \
+separated by semicolons. If there are genuinely no gaps, write "GAPS: none".
+
+--- CANDIDATE CV ---
+{cv}
+--- END CV ---
+
+--- TARGET JOB DESCRIPTION ---
+{jd}
+--- END JOB DESCRIPTION ---"""
+
+
+# ---------------------------------------------------------------------------
+# 7. Roast mode — optional, opt-in, and still never dishonest.
+# ---------------------------------------------------------------------------
+
+ROAST_PROMPT = """Roast this CV. The candidate has explicitly asked for blunt, \
+funny, unsparing feedback — they opted in, so do not soften it into a compliment \
+sandwich.
+
+Rules that still apply (roasting is not licence to be wrong or cruel):
+- Roast the WRITING, never the person, their background, or their circumstances.
+- Every jab must be about something actually in the CV. Do not invent flaws.
+- Punch at clichés, vagueness, buzzwords, unquantified claims, wall-of-text \
+formatting, "responsible for" bullets, and anything that says nothing.
+- Nothing about protected characteristics, age, nationality, or career breaks.
+- End genuinely useful. The point is a better CV, not a worse mood.
+
+Format exactly:
+
+# 🔥 CV Roast
+
+## The verdict in one line
+One brutal but fair sentence.
+
+## What made me wince
+4-6 bullets. Each: quote the offending phrase from the CV, then say why it is \
+doing nothing for them. Be funny. Be specific.
+
+## Cliché count
+List the buzzwords and dead phrases you found, with a count. Crown the worst one.
+
+## Credit where it's due
+2-3 bullets on what genuinely works. Do not invent praise — if something is good, \
+say why it is good.
+
+## The five fixes that would actually change the outcome
+A numbered list of 5 concrete, specific edits, in priority order. Name the exact \
+bullet or section to change and what to change it to.
+
+--- CANDIDATE CV ---
+{cv}
+--- END CV ---"""

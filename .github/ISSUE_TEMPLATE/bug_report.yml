@@ -1,0 +1,96 @@
+name: 🐛 Bug report
+description: Something isn't working the way it should
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please don't paste your real CV or your API key —
+        redact both. A short excerpt that reproduces the problem is plenty.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what did you get instead?
+      placeholder: I ran `offerprinter --cv cv.pdf --jd-file jd.txt` and…
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How can we reproduce it?
+      description: The exact command or steps.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: output
+    attributes:
+      label: Error output
+      description: The full traceback or error message, with any key redacted.
+      render: shell
+
+  - type: dropdown
+    id: interface
+    attributes:
+      label: How were you running it?
+      options:
+        - CLI
+        - Web UI (Streamlit)
+        - Docker
+        - Standalone binary
+        - As a Python library
+        - Agent skill
+    validations:
+      required: true
+
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Which provider?
+      description: Output quality and API behaviour vary a lot between models.
+      options:
+        - anthropic
+        - openai
+        - gemini
+        - kimi
+        - ollama
+        - other / OpenAI-compatible endpoint
+        - not relevant to this bug
+    validations:
+      required: true
+
+  - type: input
+    id: model
+    attributes:
+      label: Which model?
+      placeholder: claude-haiku-4-5-20251001
+
+  - type: input
+    id: version
+    attributes:
+      label: OfferPrinter version
+      description: Output of `offerprinter --version`.
+      placeholder: "0.2.0"
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: OS and Python version
+      placeholder: macOS 15.1, Python 3.12.4
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I have redacted my API key and any personal details from this report.
+          required: true
+        - label: I searched existing issues and this isn't a duplicate.
+          required: true

@@ -29,6 +29,13 @@ class OpenAIProvider(LLMProvider):
             ],
         }
         data = self._post(url, headers, payload)
+
+        usage = data.get("usage") or {}
+        self._record_usage(
+            int(usage.get("prompt_tokens", 0)),
+            int(usage.get("completion_tokens", 0)),
+        )
+
         try:
             return data["choices"][0]["message"]["content"]
         except (KeyError, IndexError, TypeError) as exc:
