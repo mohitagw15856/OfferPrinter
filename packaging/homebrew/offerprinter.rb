@@ -23,6 +23,12 @@ class Offerprinter < Formula
 
   depends_on "python@3.14"
 
+  # pydantic-core is a Rust extension and Homebrew builds every resource from
+  # source, so the Rust toolchain and its build backend are needed at build
+  # time (but not at run time).
+  depends_on "maturin" => :build
+  depends_on "rust" => :build
+
   resource "annotated-doc" do
     url "https://files.pythonhosted.org/packages/5a/8e/38aa427ed5402449e226975b649c5dc73ccadfefeb95e6aecb8f8ea4b6b6/annotated_doc-0.0.5.tar.gz"
     sha256 "c7e58ce09192557605d8bbd92836d7e1d520ac9580096042c0bfd197efacf1bb"

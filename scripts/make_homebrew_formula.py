@@ -126,6 +126,12 @@ class Offerprinter < Formula
 
   depends_on "{PYTHON_FORMULA}"
 
+  # pydantic-core is a Rust extension and Homebrew builds every resource from
+  # source, so the Rust toolchain and its build backend are needed at build
+  # time (but not at run time).
+  depends_on "maturin" => :build
+  depends_on "rust" => :build
+
 {chr(10).join(resources)}
   def install
     virtualenv_install_with_resources

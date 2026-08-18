@@ -165,6 +165,19 @@ docker run --rm -v "$PWD:/work" -w /work -e ANTHROPIC_API_KEY="sk-ant-..." \
 brew tap mohitagw15856/tap
 brew install offerprinter
 ```
+
+Homebrew 6 requires third-party taps to be trusted before it will use them.
+If `brew doctor` says the tap is untrusted, either trust this one formula:
+
+```bash
+brew trust --formula mohitagw15856/tap/offerprinter
+```
+
+…or the whole tap, with `brew trust --tap mohitagw15856/tap`.
+
+Homebrew builds every Python dependency from source, so the first install
+compiles `pydantic-core` with Rust and takes a few minutes. `pipx install
+offerprinter` is faster if you don't specifically want Homebrew to manage it.
 </details>
 
 <details>
