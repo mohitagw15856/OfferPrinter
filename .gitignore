@@ -1,6 +1,8 @@
 # --- OfferPrinter ---
 # Never commit secrets or generated user output.
-config.toml
+# Anchored to the repo root: an unanchored "config.toml" also matches nested
+# files like .streamlit/config.toml, which is checked in on purpose.
+/config.toml
 .env
 output/
 !examples/output/

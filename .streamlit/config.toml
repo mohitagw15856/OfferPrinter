@@ -1,0 +1,21 @@
+# Streamlit settings for both local runs and the hosted demo.
+
+[theme]
+base = "light"
+primaryColor = "#6C4AB6"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F5F3FA"
+textColor = "#1A1A1A"
+
+[browser]
+# The demo is public and stateless; no reason to phone home.
+gatherUsageStats = false
+
+[server]
+headless = true
+# CVs can be large PDFs, but nobody needs to upload 200MB.
+maxUploadSize = 10
+
+[client]
+toolbarMode = "minimal"
+showErrorDetails = true
