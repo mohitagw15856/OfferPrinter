@@ -12,11 +12,15 @@ import os
 
 block_cipher = None
 
-ENTRY = os.path.join("packaging", "pyinstaller", "entrypoint.py")
+# PyInstaller resolves relative paths in a spec against the spec's OWN
+# directory, not the working directory — so these must be built from SPECPATH
+# (which PyInstaller injects) rather than written as repo-relative paths.
+ENTRY = os.path.join(SPECPATH, "entrypoint.py")  # noqa: F821 - injected by PyInstaller
+REPO_ROOT = os.path.abspath(os.path.join(SPECPATH, "..", ".."))  # noqa: F821
 
 a = Analysis(
     [ENTRY],
-    pathex=["."],
+    pathex=[REPO_ROOT],
     binaries=[],
     datas=[],
     hiddenimports=[

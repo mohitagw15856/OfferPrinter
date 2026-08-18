@@ -57,6 +57,10 @@ jobs:
 
       - name: Publish
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # A re-run of a tag whose version is already on PyPI should be a
+          # no-op, not a red build. PyPI never allows overwriting a version.
+          skip-existing: true
 
   binaries:
     name: Standalone binary (${{ matrix.label }})
