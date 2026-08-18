@@ -1,0 +1,57 @@
+[project]
+name = "offerprinter"
+version = "0.1.0"
+description = "Local-first job-application tool: paste one job description and your CV, get a complete tailored application package."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "OfferPrinter contributors" }]
+keywords = ["job-application", "cv", "resume", "cover-letter", "ats", "llm", "local-first"]
+
+# Runtime dependencies. Kept deliberately small: providers are called over
+# their plain REST APIs via httpx, so we do not pull in four separate vendor SDKs.
+dependencies = [
+    "httpx>=0.27",           # HTTP client for LLM providers and JD URL fetching
+    "pydantic>=2.6",         # typed models for the data that flows through the pipeline
+    "tomli>=2.0; python_version < '3.11'",  # TOML parsing fallback (stdlib tomllib on 3.11+)
+    "python-docx>=1.1",      # read .docx CVs and write .docx outputs
+    "pypdf>=4.2",            # read .pdf CVs
+    "selectolax>=0.3.21",    # fast, dependency-light HTML text extraction for JD URLs
+    "typer>=0.12",           # CLI framework (rich --help out of the box)
+    "rich>=13.7",            # pretty CLI output
+    "streamlit>=1.36",       # WebUI
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.5",             # lint + format
+    "pytest>=8.0",
+]
+
+[project.scripts]
+offerprinter = "cli:app"
+
+[project.urls]
+Homepage = "https://github.com/mohitagw15856/offerprinter"
+Repository = "https://github.com/mohitagw15856/offerprinter"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["offerprinter"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+# A pragmatic, readable default: pycodestyle, pyflakes, isort, bugbear, pyupgrade.
+select = ["E", "F", "I", "B", "UP", "W"]
+# E501: line length is handled by the formatter, not the linter.
+# B008: Typer's public API intentionally uses `typer.Option(...)` as a default.
+ignore = ["E501", "B008"]
+
+[tool.ruff.format]
+quote-style = "double"
