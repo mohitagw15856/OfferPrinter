@@ -21,7 +21,7 @@ class Offerprinter < Formula
   license "MIT"
   head "https://github.com/mohitagw15856/OfferPrinter.git", branch: "main"
 
-  depends_on "python@3.12"
+  depends_on "python@3.14"
 
   resource "annotated-doc" do
     url "https://files.pythonhosted.org/packages/5a/8e/38aa427ed5402449e226975b649c5dc73ccadfefeb95e6aecb8f8ea4b6b6/annotated_doc-0.0.5.tar.gz"

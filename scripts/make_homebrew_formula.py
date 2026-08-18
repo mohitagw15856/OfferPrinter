@@ -27,6 +27,12 @@ import httpx
 
 PYPI = "https://pypi.org/pypi/{name}/json"
 
+#: Track Homebrew's current default `python` formula. Formulae are expected to
+#: depend on it rather than pinning an older interpreter, and older Homebrew
+#: pythons can lag behind new macOS releases (python@3.12 returns an empty
+#: platform.mac_ver() on macOS 26, which breaks pip inside the virtualenv).
+PYTHON_FORMULA = "python@3.14"
+
 #: Installed into every venv by the tooling itself; never a real dependency.
 SKIP = {"pip", "setuptools", "wheel", "offerprinter"}
 
@@ -118,7 +124,7 @@ class Offerprinter < Formula
   license "MIT"
   head "https://github.com/mohitagw15856/OfferPrinter.git", branch: "main"
 
-  depends_on "python@3.12"
+  depends_on "{PYTHON_FORMULA}"
 
 {chr(10).join(resources)}
   def install
