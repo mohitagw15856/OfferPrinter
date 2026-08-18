@@ -1,0 +1,72 @@
+# =============================================================================
+# OfferPrinter configuration
+# -----------------------------------------------------------------------------
+# Copy this file to `config.toml` and edit. Every setting here can ALSO be set
+# via an environment variable (see comments), and env vars win over the file.
+#
+# The only thing you MUST provide is an API key for your chosen provider.
+# Everything else has a sensible default that runs out of the box.
+# =============================================================================
+
+[llm]
+# Which provider to use. One of: "anthropic", "openai", "gemini", "kimi".
+# Switching provider is a one-line change here (or set OFFERPRINTER_PROVIDER).
+# Env var: OFFERPRINTER_PROVIDER
+provider = "anthropic"
+
+# The model to call. Leave blank ("") to use each provider's sensible default
+# (the cheapest capable model — see the table below).
+#   anthropic default : claude-haiku-4-5-20251001   (fast + cheap)
+#   openai    default : gpt-4o-mini
+#   gemini    default : gemini-1.5-flash
+#   kimi      default : moonshot-v1-8k
+# Env var: OFFERPRINTER_MODEL
+model = ""
+
+# Your API key. STRONGLY prefer setting this via an environment variable rather
+# than committing it to a file. If left blank, OfferPrinter reads the standard
+# per-provider env var instead:
+#   anthropic -> ANTHROPIC_API_KEY
+#   openai    -> OPENAI_API_KEY
+#   gemini    -> GEMINI_API_KEY  (or GOOGLE_API_KEY)
+#   kimi      -> MOONSHOT_API_KEY
+# Env var (overrides all of the above): OFFERPRINTER_API_KEY
+api_key = ""
+
+# Optional: override the provider's API base URL (e.g. for a proxy or a
+# self-hosted OpenAI-compatible gateway). Leave blank for the official endpoint.
+# Env var: OFFERPRINTER_BASE_URL
+base_url = ""
+
+# Sampling temperature. Lower = more faithful/deterministic, which is what we
+# want for a no-fabrication tool. Range 0.0–1.0.
+temperature = 0.2
+
+# Max tokens to generate per artifact. Raise if your CV/JD are very long.
+max_tokens = 4096
+
+# Request timeout in seconds.
+timeout = 120
+
+
+[output]
+# British English by default. Set to "US" for American spelling/idiom.
+# Accepted: "UK", "US".
+# Env var: OFFERPRINTER_LOCALE
+locale = "UK"
+
+# Where generated packages are written. A subfolder <company>-<role>/ is created
+# per run. Env var: OFFERPRINTER_OUTPUT_DIR
+dir = "./output"
+
+# Which file formats to write. "md" and "docx" are supported.
+formats = ["md", "docx"]
+
+
+[generation]
+# Which of the five artifacts to produce. Turn any off to save tokens/time.
+tailored_cv = true
+cover_letter = true
+fit_memo = true
+ats_report = true
+interview_prep = true

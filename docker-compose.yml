@@ -1,0 +1,22 @@
+# Run OfferPrinter's WebUI in an isolated container:
+#   ANTHROPIC_API_KEY=sk-... docker compose up
+# then open http://localhost:8501
+#
+# Switch providers by passing the relevant key instead (OPENAI_API_KEY,
+# GEMINI_API_KEY, MOONSHOT_API_KEY) and setting OFFERPRINTER_PROVIDER.
+services:
+  offerprinter:
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      # Pass through whichever keys you have set in your shell/.env.
+      OFFERPRINTER_PROVIDER: ${OFFERPRINTER_PROVIDER:-anthropic}
+      OFFERPRINTER_MODEL: ${OFFERPRINTER_MODEL:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      MOONSHOT_API_KEY: ${MOONSHOT_API_KEY:-}
+    volumes:
+      # Persist generated packages to your host's ./output folder.
+      - ./output:/app/output

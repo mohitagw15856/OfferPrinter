@@ -1,0 +1,31 @@
+# --- OfferPrinter ---
+# Never commit secrets or generated user output.
+config.toml
+.env
+output/
+!examples/output/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.python-version
+
+# --- Tooling ---
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# --- OS / editor ---
+.DS_Store
+.idea/
+.vscode/
+*.swp
