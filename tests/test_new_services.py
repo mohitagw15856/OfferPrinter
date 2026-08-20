@@ -122,9 +122,28 @@ def test_cache_key_cannot_be_confused_by_field_boundaries():
 
 
 def test_expired_entries_are_ignored(tmp_path):
-    cache = ResponseCache(directory=tmp_path, ttl_days=0)
+    """Age out old entries without depending on clock resolution."""
+    import json as _json
+
+    cache = ResponseCache(directory=tmp_path, ttl_days=1)
     key = ResponseCache.key("p", "m", "s", "u")
     cache.put(key, "stale")
+
+    # Backdate the entry rather than sleeping or trusting a zero TTL: time.time()
+    # is only accurate to ~16ms on Windows, which made the zero-TTL version flaky.
+    path = cache._path(key)
+    payload = _json.loads(path.read_text(encoding="utf-8"))
+    payload["stored_at"] -= 2 * 86400
+    path.write_text(_json.dumps(payload), encoding="utf-8")
+
+    assert cache.get(key) is None
+    assert not path.exists(), "an expired entry should be cleaned up"
+
+
+def test_zero_ttl_disables_the_cache(tmp_path):
+    cache = ResponseCache(directory=tmp_path, ttl_days=0)
+    key = ResponseCache.key("p", "m", "s", "u")
+    cache.put(key, "never served")
     assert cache.get(key) is None
 
 

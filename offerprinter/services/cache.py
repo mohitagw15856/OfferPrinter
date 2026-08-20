@@ -66,7 +66,10 @@ class ResponseCache:
             self.misses += 1
             return None
 
-        if time.time() - payload.get("stored_at", 0) > self.ttl_seconds:
+        # >= rather than >, so ttl_days=0 genuinely means "never serve from
+        # cache". With > it depended on clock resolution, which is ~16ms on
+        # Windows and made a zero TTL behave as if the entry were still fresh.
+        if time.time() - payload.get("stored_at", 0) >= self.ttl_seconds:
             path.unlink(missing_ok=True)
             self.misses += 1
             return None
