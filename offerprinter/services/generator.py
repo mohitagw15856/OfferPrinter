@@ -35,7 +35,11 @@ from offerprinter.prompts import (
     EXTRACT_META_PROMPT,
     FIT_MEMO_PROMPT,
     FIT_SCORE_PROMPT,
+    FOLLOWUP_PROMPTS,
     INTERVIEW_PREP_PROMPT,
+    PRACTICE_FEEDBACK_PROMPT,
+    PRACTICE_QUESTION_PROMPT,
+    PRACTICE_SUMMARY_PROMPT,
     ROAST_PROMPT,
     TAILORED_CV_PROMPT,
     build_system,
@@ -160,6 +164,79 @@ class Generator:
         """Score the match 0-100, strictly from evidence in the CV."""
         prompt = FIT_SCORE_PROMPT.format(cv=cv.text, jd=jd.text, company=company, role=role)
         return parse_fit_score(self.provider.complete(self.system, prompt))
+
+    def followup(
+        self,
+        kind: str,
+        cv: ResumeInput,
+        jd: JobDescription,
+        company: str,
+        role: str,
+        notes: str = "",
+    ) -> Artifact:
+        """Write one follow-up message (thank-you, recruiter, LinkedIn, nudge)."""
+        if kind not in FOLLOWUP_PROMPTS:
+            raise ValueError(
+                f"Unknown follow-up '{kind}'. Choose from: {', '.join(FOLLOWUP_PROMPTS)}"
+            )
+        title, filename, template = FOLLOWUP_PROMPTS[kind]
+        prompt = template.format(
+            cv=cv.text,
+            jd=jd.text,
+            company=company,
+            role=role,
+            notes=notes.strip() or "(none provided)",
+        )
+        content = _strip_fences(self.provider.complete(self.system, prompt))
+        return Artifact(key=f"followup_{kind}", title=title, filename=filename, content=content)
+
+    # -- interview practice -------------------------------------------------
+
+    def practice_question(
+        self,
+        cv: ResumeInput,
+        jd: JobDescription,
+        company: str,
+        role: str,
+        number: int,
+        total: int,
+        asked: list[str],
+    ) -> str:
+        """Ask one interview question, avoiding anything already asked."""
+        prompt = PRACTICE_QUESTION_PROMPT.format(
+            cv=cv.text,
+            jd=jd.text,
+            company=company,
+            role=role,
+            number=number,
+            total=total,
+            asked="\n".join(f"- {q}" for q in asked) or "(none yet)",
+        )
+        return _strip_fences(self.provider.complete(self.system, prompt)).strip().strip('"')
+
+    def practice_feedback(
+        self, question: str, answer: str, cv: ResumeInput, jd: JobDescription
+    ) -> str:
+        """Critique one practice answer, grounded in the real CV."""
+        prompt = PRACTICE_FEEDBACK_PROMPT.format(
+            question=question, answer=answer, cv=cv.text, jd=jd.text
+        )
+        return _strip_fences(self.provider.complete(self.system, prompt))
+
+    def practice_summary(
+        self, transcript: str, cv: ResumeInput, company: str, role: str
+    ) -> Artifact:
+        """Wrap up a practice session with patterns and a checklist."""
+        prompt = PRACTICE_SUMMARY_PROMPT.format(
+            transcript=transcript, cv=cv.text, company=company, role=role
+        )
+        content = _strip_fences(self.provider.complete(self.system, prompt))
+        return Artifact(
+            key="practice_summary",
+            title="Practice Session Summary",
+            filename="practice-summary",
+            content=content,
+        )
 
     def roast(self, cv: ResumeInput) -> Artifact:
         """Blunt, funny, opt-in critique of the CV's writing."""

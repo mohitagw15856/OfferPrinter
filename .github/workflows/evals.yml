@@ -1,0 +1,52 @@
+name: Evals (live)
+
+# The full evaluation suite, including the LLM-as-judge pass. Costs real money
+# and needs a key, so it runs on demand rather than on every push — typically
+# before merging a change to offerprinter/prompts/templates.py.
+#
+# Add an ANTHROPIC_API_KEY repository secret to enable it.
+
+on:
+  workflow_dispatch:
+    inputs:
+      case:
+        description: "Run a single case (blank = all)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  evals:
+    name: Live evals with judge
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install -e .
+
+      - name: Run evals
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::error::No ANTHROPIC_API_KEY secret is set — cannot run live evals."
+            exit 1
+          fi
+          python scripts/run_evals.py \
+            ${{ inputs.case && format('--case {0}', inputs.case) || '' }} \
+            --report evals/report.json \
+            --baseline evals/baseline.json
+
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: eval-report
+          path: evals/report.json

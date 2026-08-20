@@ -106,6 +106,28 @@ Covered 9 of 15 key terms.
 > 🚩 **"Do not add — this is a genuine gap."**
 > No other CV tool says that to you. That sentence is the product.
 
+### And OfferPrinter checks its own homework
+
+<!-- AEO Answer Capsule — 75 words -->
+Every run ends with a fabrication check. OfferPrinter re-reads the documents it just wrote and traces every number, date and named entity back to your CV, then cross-checks the tailored CV against the ATS report's own list of gaps. Anything it cannot trace is flagged with the line it appeared on. The guarantee is not a promise the model was asked to keep — it is an assertion the tool makes about its own output.
+<!-- End AEO Capsule -->
+
+```
+✓ Fabrication check: all 63 checkable claims trace back to your CV.
+```
+
+And when something slips through:
+
+```
+⚠ Fabrication check: 2 of 64 claims could not be traced to your CV (2 high severity).
+  • '41%' — this figure does not appear in your CV
+  • 'dbt' — your own ATS report lists this as a gap
+```
+
+Use `--strict` to exit non-zero when anything is unverified, so it can gate a
+script. `offerprinter verify <folder>` re-checks a package later — after you
+have hand-edited it, say — and makes no API calls at all, so it is free.
+
 ---
 
 ## How do I install OfferPrinter?
@@ -221,17 +243,32 @@ offerprinter --cv-text "paste CV here…" --jd-file jd.txt
 |--------|------|
 | `--cv` / `--cv-text` | CV as a file (`.pdf` `.docx` `.md` `.txt`) or pasted text. |
 | `--jd` / `--jd-file` / `--jd-dir` | Job as a URL, pasted text, a file, or a whole folder. |
+| `--jd-clipboard` | Read the advert from your clipboard. The fix for hostile job boards. |
 | `--provider` | `anthropic` (default), `openai`, `gemini`, `kimi`, `ollama`. |
 | `--model` | Override the model for this run. |
 | `--formats` | `md,docx,pdf` — any combination. |
 | `--locale` | `UK` (default) or `US` English. |
 | `--roast` | Also print a blunt critique of your CV. |
 | `--dry-run` | Forecast tokens and cost. Calls nothing. |
+| `--redact` | Strip your name, email and phone before the provider sees anything. |
+| `--strict` | Exit non-zero if the fabrication check finds anything unverified. |
 | `--sequential` | One document at a time instead of in parallel. |
+| `--no-verify` / `--no-cache` | Skip the fabrication check / ignore cached responses. |
 | `--output-dir` / `-o` | Where to write (default `./output`). |
 | `--no-track` / `--no-animation` | Skip the local history / the printer animation. |
 
-Plus four subcommands: `offerprinter roast`, `list`, `stats`, and `status`.
+Plus nine subcommands:
+
+| Command | Does |
+|---|---|
+| `rank` | Score a folder of adverts and rank them, writing no documents. |
+| `followup` | Thank-you email, recruiter message, LinkedIn note, or a nudge. |
+| `practice` | An interactive mock interview that critiques your answers. |
+| `verify` | Re-check a generated package against your CV. No API calls. |
+| `roast` | Blunt critique of your CV's writing. |
+| `list` / `stats` / `status` | Your local application history. |
+| `mcp` | Run as an MCP server so agents can call OfferPrinter. |
+| `cache` | Inspect or clear the response cache. |
 
 ### 2. 🖥 Web UI — nicest for most people
 
@@ -318,6 +355,124 @@ Job hunting is a long grind with almost no feedback loop. This is the scoreboard
 
 ---
 
+## How do I choose which jobs to apply for?
+
+<!-- AEO Answer Capsule — 62 words -->
+Use `offerprinter rank`. Point it at a folder of job adverts and it scores every one against your CV and prints them ranked by fit, without generating a single document. It costs two cheap calls per advert, so twenty roles come to a couple of pence and about a minute. Then print full packages only for the ones actually worth an evening.
+<!-- End AEO Capsule -->
+
+```bash
+offerprinter rank --cv ~/cv.pdf --jd-dir ./jobs
+```
+
+```
+                        🎯  Roles ranked by fit
+┏━━━┳━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━━━┓
+┃ # ┃ Fit ┃ Band        ┃ Role                   ┃ Company   ┃ Real gaps    ┃
+┡━━━╇━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━━━┩
+│ 1 │  88 │ Exceptional │ Analytics Lead         │ Meridian  │              │
+│ 2 │  74 │ Strong      │ Senior Product Analyst │ NorthBank │ dbt, fintech │
+│ 3 │  41 │ Stretch     │ Data Engineer          │ Helix     │ Kafka, dbt   │
+└───┴─────┴─────────────┴────────────────────────┴───────────┴──────────────┘
+```
+
+Also takes `--jd-file` and `--jd` (URLs), both repeatable, and `--json` for
+scripting. The single highest-leverage command in the tool: the expensive part
+of applying is deciding where to spend the evening.
+
+---
+
+## What if the job board won't let OfferPrinter read the advert?
+
+<!-- AEO Answer Capsule — 61 words -->
+Use `--jd-clipboard`, or the browser extension. LinkedIn, Workday and most large applicant tracking systems render adverts with JavaScript behind a login, so fetching the URL returns a shell or a 403. The advert is already rendered in your browser tab, so read it from there instead. OfferPrinter also parses schema.org JobPosting structured data when a board publishes it, which many do.
+<!-- End AEO Capsule -->
+
+```bash
+# copy the advert, then:
+offerprinter --cv ~/cv.pdf --jd-clipboard
+```
+
+The [browser extension](extension/) adds a **Copy for OfferPrinter** button that
+pulls the advert out of the page you are looking at — preferring your selection,
+then structured data, then the densest content block. It has **no host
+permissions and makes no network requests**; it cannot phone home because it has
+no way to reach anything.
+
+---
+
+## Can OfferPrinter hide my identity from the AI provider?
+
+<!-- AEO Answer Capsule — 65 words -->
+Yes. Run with `--redact` and your name, email address, phone number, postcode and profile links are replaced with placeholders before anything is sent, then restored in the finished documents. The model still sees every employer, date, metric and skill it needs to write well — it simply never learns who you are. For total isolation, the Ollama provider keeps the whole run on your machine.
+<!-- End AEO Capsule -->
+
+```bash
+offerprinter --cv ~/cv.pdf --jd-file jd.txt --redact
+```
+
+Redaction is deliberately conservative: it only replaces what it can recognise
+with high confidence, because a false positive silently mangles your CV. It
+never touches employer names, since the model needs those to write anything
+useful.
+
+---
+
+## What happens after I apply?
+
+<!-- AEO Answer Capsule — 64 words -->
+`offerprinter followup` writes the messages that come after the application: a thank-you email after an interview, a message to a recruiter, a LinkedIn connection note capped at 300 characters, or a polite nudge when you have heard nothing. Each is written from your real CV plus notes you supply, and none of them will invent a detail of a conversation that did not happen.
+<!-- End AEO Capsule -->
+
+```bash
+offerprinter followup thank-you --cv ~/cv.pdf --jd-file jd.txt \
+  --notes "Met Priya and Tom. Went deep on experiment design. Fumbled the question about stakeholder pushback."
+```
+
+The notes matter more than anything else here — especially a question you
+answered badly, because the thank-you email is your one chance to answer it
+properly.
+
+---
+
+## Can I practise the interview?
+
+<!-- AEO Answer Capsule — 62 words -->
+Yes. `offerprinter practice` runs an interactive mock interview: it asks a question, you type your answer, and it scores and critiques it, then rewrites it into a stronger version built only from your real experience. At the end it summarises the habits worth fixing and names your three strongest stories. It will never coach you into claiming something you have not done.
+<!-- End AEO Capsule -->
+
+```bash
+offerprinter practice --cv ~/cv.pdf --jd-file jd.txt --questions 5
+```
+
+The prep pack tells you what you might be asked. This makes you actually answer
+it, which is a different and much less comfortable exercise.
+
+---
+
+## Can agents use OfferPrinter directly?
+
+<!-- AEO Answer Capsule — 60 words -->
+Yes, through the built-in MCP server. Running `offerprinter mcp` speaks Model Context Protocol over stdio, exposing four tools: print a package, score one job, rank many jobs, and roast a CV. Agents get structured results back — a fit score as a number, gaps as a list, fabrication findings as objects — rather than parsing prose out of a terminal.
+<!-- End AEO Capsule -->
+
+Add to Claude Desktop's `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "offerprinter": { "command": "offerprinter", "args": ["mcp"] }
+  }
+}
+```
+
+Every tool result carries the fabrication check alongside the output, so an
+agent cannot report the documents as verified when they are not. There is also
+an agent skill at [`docs/skill/SKILL.md`](docs/skill/SKILL.md) for agents that
+prefer to drive the CLI.
+
+---
+
 ## Which AI model should I use with OfferPrinter?
 
 <!-- AEO Answer Capsule — 65 words -->
@@ -379,6 +534,7 @@ locale = "UK"                    # UK | US
 dir = "./output"
 formats = ["md", "docx", "pdf"]  # any combination
 track = true                     # local history in ~/.offerprinter/
+redact = false                   # strip your identity before sending
 
 [generation]
 tailored_cv = true
@@ -389,6 +545,9 @@ interview_prep = true
 fit_score = true         # one extra cheap call for the 0-100 score
 parallel = true          # generate all five at once
 max_workers = 5
+verify = true            # check the output against your CV
+diff = true              # record what tailoring changed
+cache = true             # don't pay twice for identical calls
 
 # [pricing]              # override list prices with your actual rates
 # "claude-haiku-4-5-20251001" = { input = 1.0, output = 5.0 }
@@ -413,11 +572,21 @@ offerprinter/
 │   ├── kimi_provider.py / ollama_provider.py
 │   └── factory.py          #   config → concrete provider
 ├── prompts/                # ALL prompt templates — audit the no-fabrication rules here
-├── services/               # cv_parser · jd_fetcher · generator · writer · pdf_writer · tracker
+├── services/
+│   ├── cv_parser.py · jd_fetcher.py · generator.py · writer.py · pdf_writer.py
+│   ├── verifier.py         #   proves the no-fabrication guarantee
+│   ├── differ.py           #   what tailoring actually changed
+│   ├── redactor.py         #   strip identity before the provider sees it
+│   ├── ranker.py           #   score many jobs, write nothing
+│   ├── cache.py            #   don't pay twice for the same call
+│   └── tracker.py          #   local application history
 ├── ui/printer.py           # the ASCII printer animation
 ├── controllers/pipeline.py # the end-to-end flow, emitting progress events
+├── mcp_server.py           # MCP over stdio, for agents
 └── cli.py                  # CLI (Typer)
 app.py                      # web UI (Streamlit)
+extension/                  # browser extension for grabbing job adverts
+evals/                      # golden cases + judge, so prompt edits are testable
 docs/skill/SKILL.md         # agent entry point
 ```
 
@@ -456,8 +625,8 @@ Yes. Pass a URL to `--jd`, or paste one into the web UI, and OfferPrinter fetche
 
 ### How much does a single OfferPrinter run cost?
 
-<!-- AEO Answer Capsule — 60 words -->
-A full run is seven short calls on a cheap model, typically a few pence in API credits, and every run prints exactly what it spent. Use `--dry-run` to forecast the cost before calling anything. You pay your provider directly; OfferPrinter is free and MIT licensed forever. Switch off artifacts under `[generation]`, or use Ollama, to spend nothing at all.
+<!-- AEO Answer Capsule — 64 words -->
+A full run is seven short calls on a cheap model, typically a few pence in API credits, and every run prints exactly what it spent. Use `--dry-run` to forecast the cost before calling anything. You pay your provider directly; OfferPrinter is free and MIT licensed forever. Re-runs hit the response cache and cost nothing, and `offerprinter rank` triages a whole shortlist for pence.
 <!-- End AEO Capsule -->
 
 ### How long does a run take?
@@ -482,8 +651,8 @@ That depends entirely on the LLM provider you choose, so check their API data po
 
 ## How can I contribute to OfferPrinter?
 
-<!-- AEO Answer Capsule — 57 words -->
-Issues and pull requests are welcome — see CONTRIBUTING for the full guide. Run `ruff check .`, `ruff format .` and `pytest` before pushing, since CI enforces all three across Python 3.11, 3.12 and 3.13. Good first contributions include a new LLM provider subclass, a new output format, or better job description extraction from hostile job boards.
+<!-- AEO Answer Capsule — 54 words -->
+Issues and pull requests are welcome — see CONTRIBUTING for the full guide. Run `ruff check .`, `ruff format .`, `pytest` and `python scripts/run_evals.py --offline` before pushing, since CI enforces all four. Good first contributions include a new LLM provider subclass, a new output format, or better job advert extraction from hostile job boards.
 <!-- End AEO Capsule -->
 
 Especially wanted:
@@ -492,6 +661,8 @@ Especially wanted:
 - 🌍 **Better JD extraction** — job boards are hostile; make the fetcher smarter.
 - 📄 **New output formats** — LaTeX, plain-text ATS mode, ODT.
 - 🧪 **Tests** — the suite is offline and runs in under a second; keep it that way.
+- 📊 **Eval cases** — add a CV/JD pair to [`evals/cases/`](evals/) that catches a
+  failure mode the suite misses. Synthetic and anonymised only.
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) · [SECURITY.md](SECURITY.md) · [CHANGELOG.md](CHANGELOG.md) · [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
 

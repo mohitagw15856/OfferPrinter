@@ -100,6 +100,27 @@ jobs:
       - name: Dry run costs nothing and calls nothing
         run: offerprinter --cv examples/sample_cv.md --jd-file examples/sample_jd.md --dry-run
 
+  evals:
+    name: Evals (offline, deterministic)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install -e .
+
+      # Offline mode replays committed golden output and runs only the checks
+      # that need no model: the fabrication verifier, plus each case's own
+      # assertions about which gaps must be named and which terms must never
+      # be claimed. Free, deterministic, and the thing that must never regress.
+      - name: Run offline evals
+        run: python scripts/run_evals.py --offline
+
   build:
     name: Build wheel + sdist
     runs-on: ubuntu-latest

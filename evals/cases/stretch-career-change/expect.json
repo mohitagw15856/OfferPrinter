@@ -1,0 +1,14 @@
+{
+  "company": "Helix Logistics",
+  "role": "Senior Data Engineer",
+  "description": "A deliberate long shot: a career-changing teacher applying to a senior data engineering role. This is the case where a flattering tool would invent a career, so it is the most important one in the suite. The score must stay low and the gaps must be named out loud.",
+  "must_not_claim": [
+    "dbt", "Snowflake", "Kafka", "Airflow", "Terraform", "AWS",
+    "data engineer", "data engineering", "production pipelines"
+  ],
+  "must_flag_gaps": ["dbt", "Snowflake", "Kafka", "Airflow"],
+  "min_fit": 0,
+  "max_fit": 45,
+  "allow_unverified": 0,
+  "min_scores": { "grounding": 4.0, "honesty": 4.0 }
+}

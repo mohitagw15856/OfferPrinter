@@ -7,6 +7,80 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-08-20
+
+The "prove it" release. v0.2.0 made OfferPrinter installable; this one makes its
+central claim checkable, and extends the tool across the rest of a job hunt.
+
+### Added
+
+**Proving the guarantee**
+- **Fabrication verifier.** Every number, date and named entity in the tailored
+  CV and cover letter is checked against your source CV, and the tailored CV is
+  cross-checked against the ATS report's own list of gaps — so a package that
+  contradicts itself is caught automatically. Writes `fabrication-check.md`.
+  `--strict` exits 3 if anything is unverified, which makes it usable as a gate.
+  Until now "never fabricate" was an instruction in a prompt; now it is an
+  assertion the tool makes about its own output.
+- **`offerprinter verify`** re-checks an already-generated package — after you
+  have hand-edited it, or in CI. Makes no API calls, so it is free and offline.
+- **Tailoring diff.** `tailoring-diff.md` shows exactly what changed: which
+  bullets were reworded, what was added or dropped, and which vocabulary is new.
+  The verifier proves nothing was invented; the diff shows what was done.
+- **Eval harness** (`evals/`, `scripts/run_evals.py`). Golden cases with
+  per-case assertions about which gaps must be named and which terms must never
+  be claimed, plus an LLM-as-judge pass scoring grounding, specificity, honesty,
+  usefulness and format. The deterministic half runs in CI on every PR; the
+  judge runs on demand. Prompt changes are no longer a guess.
+
+**New commands**
+- **`offerprinter rank`** — score a folder of adverts and rank them by fit
+  without generating a single document. Two cheap calls per job; triage twenty
+  roles for a couple of pence, then print packages only for the ones worth it.
+- **`offerprinter followup`** — thank-you email, recruiter message, LinkedIn
+  note (hard-capped at 300 characters) or a polite nudge. Written from your CV
+  and your notes; it will not invent a conversation that did not happen.
+- **`offerprinter practice`** — an interactive mock interview. It asks, you
+  answer, it critiques and rewrites your answer using only your real experience,
+  then summarises the patterns worth fixing.
+- **`offerprinter mcp`** — run as an MCP server on stdio, so Claude Desktop,
+  Claude Code and other agents can call OfferPrinter natively and get structured
+  results back. Hand-rolled JSON-RPC; no new dependencies.
+- **`offerprinter cache stats` / `cache clear`**.
+
+**Privacy and job-board reality**
+- **PII redaction** (`--redact`). Your name, email, phone and profile links are
+  replaced with placeholders before the provider sees anything, and restored in
+  the output. The model keeps every employer, date and metric it needs.
+- **`--jd-clipboard`** and a **browser extension** (`extension/`). Job boards
+  are the most common reason a run fails; the advert is already rendered in your
+  tab, so read it from there. The extension has no host permissions and makes no
+  network requests.
+- **schema.org `JobPosting` JSON-LD extraction.** Many boards embed the whole
+  advert as structured data — cleaner than anything scraped, and it supplies the
+  company and job title for free.
+
+**Cost**
+- **Response caching.** Keyed on provider, model, temperature and both prompts,
+  so anything that could change the answer correctly misses. Re-running after a
+  CV tweak is now mostly free.
+
+### Fixed
+
+- Multi-word entities could match across a line break, producing nonsense claims
+  glued together from two sentences.
+- A level-two heading (`## Missing keywords`) was not recognised as a sentence
+  start, so its first word was treated as a named entity.
+- A capitalised word at the very start of a bullet ("Used SQL daily") was read
+  as an entity, because the sentence-start pattern only handled bullets that
+  followed a newline, not one at the start of the text.
+
+### Changed
+
+- Config gains `[output] redact`, `[generation] verify`, `diff` and `cache`.
+- The test suite grew from 73 to 143 tests, still fully offline.
+
+
 ## [0.2.0] — 2026-08-18
 
 The "actually installable, and quite a lot faster" release.
@@ -99,6 +173,7 @@ First release — "First Print".
 - Config via env vars, `config.toml`, or defaults.
 - Dockerfile and docker-compose, offline test suite, ruff lint.
 
-[Unreleased]: https://github.com/mohitagw15856/OfferPrinter/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/mohitagw15856/OfferPrinter/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/mohitagw15856/OfferPrinter/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/mohitagw15856/OfferPrinter/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/mohitagw15856/OfferPrinter/releases/tag/v0.1.0

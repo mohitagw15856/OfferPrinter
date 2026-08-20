@@ -26,6 +26,10 @@ generic "improve my CV" requests with no target role — for those, use `roast` 
 4. `ats-keyword-report` — job keywords the CV covers, which are missing, and where to add missing ones truthfully.
 5. `interview-prep-pack` — likely questions, STAR scaffolds from the user's real experience, and 5 questions to ask.
 6. `fit-score` — a strict 0-100 score with band, genuine strengths, and genuine gaps.
+7. `fabrication-check` — every number, date and named entity in the tailored CV
+   and cover letter traced back to the source CV. This is the tool proving its
+   own guarantee; **always report it**.
+8. `tailoring-diff` — what the tailoring actually changed, so it can be audited.
 
 ## Required inputs
 - **CV** — a path to a `.pdf`, `.docx`, `.md`, or `.txt` file, OR the CV pasted as text.
@@ -71,11 +75,28 @@ offerprinter --provider ollama --cv cv.pdf --jd-file jd.txt
 Other commands:
 
 ```bash
+offerprinter rank --cv cv.pdf --jd-dir ./jobs   # triage many roles, write nothing
+offerprinter verify output/<slug> --cv cv.pdf   # re-check a package; no API calls
+offerprinter followup thank-you --cv cv.pdf --jd-file jd.txt --notes "..."
+offerprinter practice --cv cv.pdf --jd-file jd.txt   # interactive; needs a human
 offerprinter roast --cv cv.pdf         # blunt critique of the CV's writing (opt-in)
 offerprinter list                      # applications printed so far
 offerprinter stats                     # totals, spend, average fit
 offerprinter status <slug> interview   # record progress on an application
 ```
+
+Two flags worth knowing:
+
+- `--strict` exits with code 3 if the fabrication check finds anything
+  unverified. Use it when running unattended, so a bad package fails loudly
+  instead of being handed over quietly.
+- `--redact` strips the candidate's name, email, phone and links before the
+  provider sees the CV, and restores them afterwards. Offer it if the user
+  seems privacy-conscious.
+
+**Prefer the MCP server if your client supports it.** `offerprinter mcp` speaks
+MCP over stdio and returns structured results — score as a number, gaps as a
+list, findings as objects — instead of prose you have to parse.
 
 Programmatic use (if you're driving it from code rather than the CLI):
 
@@ -92,6 +113,9 @@ package = Pipeline(cfg).run(cv, jd)  # writes output/<company>-<role>/
 
 print(package.fit.score, package.fit.band)  # e.g. 74 Strong
 print(package.usage.cost_usd)  # what the run cost
+print(package.verification.passed, package.verification.summary())
+for finding in package.verification.findings:
+    print(finding.as_line())  # anything that could not be traced to the CV
 ```
 
 Use `Pipeline.stream(cv, jd)` instead of `.run()` if you want to report progress —
@@ -103,6 +127,12 @@ it yields events of kind `meta`, `artifact`, `fit`, `written`, and `done`.
   fabricated by construction.
 - **Report the gaps.** When you hand the package back, surface the fit score and
   the flagged gaps explicitly. Those are the most useful output, not the least.
+- **Report the fabrication check too, and never claim output is verified when it
+  is not.** If it found anything, say so and quote the findings before handing
+  the documents over. A checker whose result gets quietly dropped is worthless.
+- **Triage before generating.** If the user has several roles in mind, run
+  `rank` first and generate packages only for the ones worth it. It is far
+  cheaper and it answers the question they actually have.
 - **Don't "fix" a low score** by re-running with embellishment. A 48 is
   information, not a failure.
 - Artifacts generate concurrently by default; pass `--sequential` if the
@@ -118,6 +148,9 @@ it yields events of kind `meta`, `artifact`, `fit`, `written`, and `done`.
 - [ ] The ATS report's "Missing keywords" section tells the user NOT to add any term they have no real experience with.
 - [ ] The interview prep STAR scaffolds are built only from real CV experience; where no real example exists, it says so instead of inventing one.
 - [ ] The fit score's gaps list is not empty when the fit memo flags gaps — the two must agree.
+- [ ] The fabrication check was run, and its result was reported to the user —
+      including when it passed.
+- [ ] No keyword the ATS report lists as missing appears in the tailored CV.
 - [ ] Output is in the configured English variant (UK by default).
 
 If any check fails, fix it before handing the package back — do not paper over a

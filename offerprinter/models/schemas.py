@@ -51,6 +51,8 @@ class OutputConfig(BaseModel):
     formats: list[str] = Field(default_factory=lambda: ["md", "docx"])
     #: Append each run to the local history in ~/.offerprinter/applications.json.
     track: bool = True
+    #: Strip name, email, phone and links before the provider ever sees the CV.
+    redact: bool = False
 
 
 class GenerationConfig(BaseModel):
@@ -68,6 +70,12 @@ class GenerationConfig(BaseModel):
     parallel: bool = True
     #: Upper bound on concurrent LLM calls.
     max_workers: int = 5
+    #: Check every claim in the output against the source CV.
+    verify: bool = True
+    #: Record what tailoring changed, so it can be audited quickly.
+    diff: bool = True
+    #: Reuse identical previous responses instead of paying for them again.
+    cache: bool = True
 
     def enabled(self) -> list[str]:
         """Return the keys of the artifacts that are switched on, in order."""
@@ -183,6 +191,118 @@ class FitScore(BaseModel):
         return "\n".join(lines)
 
 
+class Severity(StrEnum):
+    """How seriously to take an unverified claim."""
+
+    HIGH = "high"  # a number, date or metric with no source in the CV
+    MEDIUM = "medium"  # a proper noun (employer, tool, place) with no source
+    LOW = "low"  # plausible but worth a glance
+
+
+#: How each kind of finding is explained to a human.
+FINDING_REASONS = {
+    "number": "this figure does not appear in your CV",
+    "date": "this date does not appear in your CV",
+    "entity": "no mention of this in your CV",
+    "ats-gap": "your own ATS report lists this as a gap",
+}
+
+
+class Finding(BaseModel):
+    """One claim in generated output that could not be traced to the CV."""
+
+    artifact: str  # which document it appeared in
+    claim: str  # the exact token or phrase
+    kind: str  # a key of FINDING_REASONS
+    severity: Severity
+    context: str = ""  # the surrounding line, for eyeballing
+
+    @property
+    def reason(self) -> str:
+        return FINDING_REASONS.get(self.kind, self.kind)
+
+    def as_line(self) -> str:
+        where = f"{self.artifact} · " if self.artifact else ""
+        return f"[{self.severity.value}] {where}{self.claim!r} — {self.reason}"
+
+
+class Verification(BaseModel):
+    """The result of checking generated output against the source CV.
+
+    This is what turns the no-fabrication guarantee from a prompt instruction
+    into something the tool actually proves.
+    """
+
+    findings: list[Finding] = Field(default_factory=list)
+    checked_artifacts: list[str] = Field(default_factory=list)
+    claims_checked: int = 0
+
+    @property
+    def passed(self) -> bool:
+        return not self.findings
+
+    @property
+    def high(self) -> list[Finding]:
+        return [f for f in self.findings if f.severity is Severity.HIGH]
+
+    def summary(self) -> str:
+        if self.passed:
+            return f"All {self.claims_checked} checkable claims trace back to your CV."
+        return (
+            f"{len(self.findings)} of {self.claims_checked} claims could not be traced "
+            f"to your CV ({len(self.high)} high severity)."
+        )
+
+    def as_markdown(self) -> str:
+        lines = ["# Fabrication Check", ""]
+        lines += [self.summary(), ""]
+        if self.passed:
+            lines += [
+                "Every employer, job title, date, number and named tool in the",
+                "generated documents appears in your source CV. Nothing was invented.",
+                "",
+            ]
+        else:
+            lines += [
+                "The claims below appear in the generated documents but could not be",
+                "matched to anything in your CV. Review each one before sending —",
+                "either it is a paraphrase the checker could not match, or it should go.",
+                "",
+            ]
+            for severity in (Severity.HIGH, Severity.MEDIUM, Severity.LOW):
+                group = [f for f in self.findings if f.severity is severity]
+                if not group:
+                    continue
+                lines += [f"## {severity.value.title()} severity", ""]
+                for finding in group:
+                    lines.append(
+                        f"- **{finding.claim}** — {finding.reason} (in {finding.artifact})"
+                    )
+                    if finding.context:
+                        lines.append(f"  > {finding.context}")
+                lines.append("")
+        lines += [
+            "> Checked automatically by OfferPrinter. A checker can only verify what it",
+            "> can match textually; you are still the final reviewer.",
+            "",
+        ]
+        return "\n".join(lines)
+
+
+class RankedJob(BaseModel):
+    """One job description scored during a `rank` run."""
+
+    source: str  # filename or URL
+    company: str = ""
+    role: str = ""
+    fit: FitScore | None = None
+    error: str = ""
+
+    @property
+    def score(self) -> int:
+        return self.fit.score if self.fit else -1
+
+
 class ApplicationPackage(BaseModel):
     """The full result of one run."""
 
@@ -192,6 +312,8 @@ class ApplicationPackage(BaseModel):
     artifacts: list[Artifact] = Field(default_factory=list)
     fit: FitScore | None = None
     usage: Usage = Field(default_factory=Usage)
+    verification: Verification | None = None
+    diff: str = ""  # markdown report of what tailoring changed
 
     def get(self, key: str) -> Artifact | None:
         return next((a for a in self.artifacts if a.key == key), None)

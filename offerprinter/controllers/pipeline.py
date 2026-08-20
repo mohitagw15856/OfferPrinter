@@ -21,9 +21,14 @@ from offerprinter.models.schemas import (
     JobDescription,
     ResumeInput,
     Usage,
+    Verification,
 )
+from offerprinter.services.cache import CachedProvider
+from offerprinter.services.differ import diff_cv
 from offerprinter.services.generator import Generator, _slugify
+from offerprinter.services.redactor import Redactor
 from offerprinter.services.tracker import ApplicationRecord, Tracker, utc_now
+from offerprinter.services.verifier import verify_package
 from offerprinter.services.writer import write_package
 
 
@@ -31,13 +36,14 @@ from offerprinter.services.writer import write_package
 class PipelineEvent:
     """A progress update emitted while the pipeline runs."""
 
-    kind: str  # "meta" | "artifact" | "fit" | "written" | "done"
+    kind: str  # "meta" | "artifact" | "fit" | "verified" | "written" | "done"
     message: str
     artifact: Artifact | None = None
     package: ApplicationPackage | None = None
     written: dict[str, list[Path]] | None = None
     fit: FitScore | None = None
     achievements: list[str] | None = None
+    verification: Verification | None = None
 
 
 class Pipeline:
@@ -45,7 +51,9 @@ class Pipeline:
 
     def __init__(self, config: Config) -> None:
         self.config = config
-        self.provider = build_provider(config.llm, config.pricing)
+        provider = build_provider(config.llm, config.pricing)
+        # Caching is a decorator, so nothing downstream knows or cares.
+        self.provider = CachedProvider(provider) if config.generation.cache else provider
         self.generator = Generator(
             self.provider,
             locale=config.output.locale,
@@ -54,6 +62,14 @@ class Pipeline:
 
     def stream(self, cv: ResumeInput, jd: JobDescription) -> Iterator[PipelineEvent]:
         """Run the pipeline, yielding a PipelineEvent at each step."""
+        original_cv = cv
+
+        # 0. Optionally strip the candidate's identity before anything is sent.
+        redactor: Redactor | None = None
+        if self.config.output.redact:
+            redactor = Redactor()
+            cv = ResumeInput(text=redactor.redact(cv.text), source=cv.source)
+
         # 1. Identify company + role.
         company = jd.company or ""
         role = jd.role or ""
@@ -68,6 +84,8 @@ class Pipeline:
         # 2. Generate each enabled artifact, streaming as we go. In parallel
         #    mode these arrive in completion order, so we re-sort afterwards.
         for artifact in self.generator.iter_generate(cv, jd, company, role):
+            if redactor is not None:
+                artifact.content = redactor.restore(artifact.content)
             package.artifacts.append(artifact)
             yield PipelineEvent(kind="artifact", message=artifact.title, artifact=artifact)
         package.sort_artifacts()
@@ -78,10 +96,25 @@ class Pipeline:
             package.fit = fit
             yield PipelineEvent(kind="fit", message=f"{fit.score}/100 — {fit.band}", fit=fit)
 
-        # 4. Account for what the run cost.
+        # 4. Prove the guarantee rather than asserting it: check every claim in
+        #    the generated documents against the *original* CV.
+        if self.config.generation.verify:
+            package.verification = verify_package(package, original_cv, jd)
+            yield PipelineEvent(
+                kind="verified",
+                message=package.verification.summary(),
+                verification=package.verification,
+            )
+
+        # 5. Record what tailoring actually changed, so it can be audited.
+        tailored = package.get("tailored_cv")
+        if self.config.generation.diff and tailored is not None:
+            package.diff = diff_cv(original_cv.text, tailored.content).as_markdown()
+
+        # 6. Account for what the run cost.
         package.usage = Usage(**self.provider.usage.model_dump())
 
-        # 5. Write to disk.
+        # 7. Write to disk.
         written = write_package(package, self.config.output.dir, self.config.output.formats)
         out_dir = Path(self.config.output.dir) / slug
         yield PipelineEvent(
@@ -91,7 +124,7 @@ class Pipeline:
             written=written,
         )
 
-        # 6. Record it locally, so `offerprinter list` and `stats` can see it.
+        # 8. Record it locally, so `offerprinter list` and `stats` can see it.
         achievements = self._track(package, out_dir)
 
         yield PipelineEvent(

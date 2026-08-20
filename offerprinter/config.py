@@ -161,6 +161,7 @@ def load_config(config_path: str | os.PathLike[str] | None = None) -> Config:
             env_formats.split(",") if env_formats else out_raw.get("formats", ["md", "docx"])
         ),
         track=_env_bool("OFFERPRINTER_TRACK", bool(out_raw.get("track", True))),
+        redact=_env_bool("OFFERPRINTER_REDACT", bool(out_raw.get("redact", False))),
     )
 
     # ---- generation --------------------------------------------------------
@@ -173,6 +174,9 @@ def load_config(config_path: str | os.PathLike[str] | None = None) -> Config:
         fit_score=bool(gen_raw.get("fit_score", True)),
         parallel=_env_bool("OFFERPRINTER_PARALLEL", bool(gen_raw.get("parallel", True))),
         max_workers=int(gen_raw.get("max_workers", 5)),
+        verify=_env_bool("OFFERPRINTER_VERIFY", bool(gen_raw.get("verify", True))),
+        diff=bool(gen_raw.get("diff", True)),
+        cache=_env_bool("OFFERPRINTER_CACHE", bool(gen_raw.get("cache", True))),
     )
 
     return Config(

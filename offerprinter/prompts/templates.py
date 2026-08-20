@@ -337,3 +337,276 @@ bullet or section to change and what to change it to.
 --- CANDIDATE CV ---
 {cv}
 --- END CV ---"""
+
+
+# ---------------------------------------------------------------------------
+# 8. Follow-up messages — the job hunt does not end at "submit".
+# ---------------------------------------------------------------------------
+
+_FOLLOWUP_RULES = """You are writing a short message on the candidate's behalf. \
+The same absolute rules apply: use ONLY facts from their CV and the conversation \
+notes they give you. Never invent a detail of a conversation that did not happen, \
+never claim a skill they lack, and never put words in the interviewer's mouth.
+
+Write plainly. No "I am reaching out", no "I wanted to circle back", no flattery \
+that could be sent to any company. Short is better than long — this is a message \
+someone reads on their phone between meetings."""
+
+THANK_YOU_PROMPT = (
+    _FOLLOWUP_RULES
+    + """
+
+Write a THANK-YOU EMAIL after an interview for {role} at {company}.
+
+Structure:
+- Subject line.
+- One sentence of genuine thanks, naming something specific that was discussed \
+(use the notes below; if the notes are empty, keep it general rather than inventing).
+- One short paragraph reinforcing the single strongest reason they fit, drawn \
+from their real CV.
+- If the notes mention a question the candidate answered poorly or incompletely, \
+one or two sentences answering it better — this is the highest-value part.
+- One line confirming continued interest and offering to provide anything further.
+
+120-200 words total. Sign with the candidate's real name.
+
+--- CANDIDATE CV ---
+{cv}
+--- END CV ---
+
+--- JOB DESCRIPTION ---
+{jd}
+--- END JOB DESCRIPTION ---
+
+--- NOTES FROM THE CONVERSATION (may be empty) ---
+{notes}
+--- END NOTES ---"""
+)
+
+RECRUITER_PROMPT = (
+    _FOLLOWUP_RULES
+    + """
+
+Write a SHORT MESSAGE TO A RECRUITER OR HIRING MANAGER about {role} at {company}, \
+before or alongside applying.
+
+Structure:
+- Subject line.
+- One sentence saying which role and that they have applied (or are about to).
+- Two or three sentences on the most role-relevant real experience, with one \
+concrete metric from the CV.
+- One sentence inviting a short conversation.
+
+Under 150 words. This is a cold-ish message: earn the reply, do not demand it.
+
+--- CANDIDATE CV ---
+{cv}
+--- END CV ---
+
+--- JOB DESCRIPTION ---
+{jd}
+--- END JOB DESCRIPTION ---
+
+--- NOTES (may be empty) ---
+{notes}
+--- END NOTES ---"""
+)
+
+LINKEDIN_PROMPT = (
+    _FOLLOWUP_RULES
+    + """
+
+Write a LINKEDIN CONNECTION NOTE to someone at {company} about {role}.
+
+Hard constraint: **300 characters maximum**, including spaces. LinkedIn will \
+truncate anything longer. No subject line, no sign-off, no links.
+
+Say who they are, one specific true thing that connects them to this role, and \
+what they are asking for. Warm, direct, not fawning.
+
+--- CANDIDATE CV ---
+{cv}
+--- END CV ---
+
+--- JOB DESCRIPTION ---
+{jd}
+--- END JOB DESCRIPTION ---
+
+--- NOTES (may be empty) ---
+{notes}
+--- END NOTES ---"""
+)
+
+NUDGE_PROMPT = (
+    _FOLLOWUP_RULES
+    + """
+
+Write a POLITE FOLLOW-UP NUDGE for {role} at {company}, sent because the \
+candidate has heard nothing back.
+
+Structure:
+- Subject line that references the role, not "following up".
+- One sentence noting when they applied or last spoke (use the notes; if unknown, \
+say "recently" rather than inventing a date).
+- One sentence of new, genuine value — a relevant thing they have done since, or \
+the single strongest point from their CV restated briefly.
+- One sentence asking about timelines, making it easy to reply with one line.
+
+Under 120 words. Warm, brief, zero guilt-tripping. Assume the reader is busy and \
+not ignoring them on purpose.
+
+--- CANDIDATE CV ---
+{cv}
+--- END CV ---
+
+--- JOB DESCRIPTION ---
+{jd}
+--- END JOB DESCRIPTION ---
+
+--- NOTES (may be empty) ---
+{notes}
+--- END NOTES ---"""
+)
+
+
+# ---------------------------------------------------------------------------
+# 9. Interview practice — an interactive rehearsal, not another document.
+# ---------------------------------------------------------------------------
+
+PRACTICE_QUESTION_PROMPT = """You are interviewing this candidate for {role} at \
+{company}. Ask ONE interview question and nothing else.
+
+Question number {number} of {total}. Vary the type across the set: behavioural, \
+role-specific/technical, and motivation. Ask what a real interviewer for THIS role \
+would actually ask, informed by the job description and the candidate's background.
+
+Questions already asked (do not repeat or closely echo them):
+{asked}
+
+Return ONLY the question text. No preamble, no numbering, no quotation marks.
+
+--- CANDIDATE CV ---
+{cv}
+--- END CV ---
+
+--- JOB DESCRIPTION ---
+{jd}
+--- END JOB DESCRIPTION ---"""
+
+PRACTICE_FEEDBACK_PROMPT = """Critique the candidate's practice answer below.
+
+Be a good interview coach: specific, honest, and useful. Do not be gentle to the \
+point of uselessness, and do not be harsh for its own sake.
+
+Judge the answer on:
+- Does it actually answer the question that was asked?
+- Is it concrete? Does it use a real example with a real outcome?
+- Is it structured (situation, action, result) or does it wander?
+- Is it the right length for an interview — roughly 60-120 seconds spoken?
+- Does it connect to what THIS role needs?
+
+Critical rule: any improvement you suggest must be grounded in the candidate's \
+REAL CV below. Never coach them to claim experience they do not have. If their \
+answer is weak because they genuinely lack the experience, say so and suggest \
+the closest true thing they could say instead.
+
+Format exactly:
+
+**Score: X/10**
+
+**What worked**
+- one or two bullets, specific to what they actually said
+
+**What to fix**
+- two or three bullets, each naming the exact problem and the fix
+
+**A stronger version of your answer**
+A short rewritten answer, 80-140 words, built ONLY from facts in their CV. Write \
+it in their voice, first person, as they would say it aloud.
+
+--- THE QUESTION ---
+{question}
+
+--- THE CANDIDATE'S ANSWER ---
+{answer}
+
+--- CANDIDATE CV ---
+{cv}
+--- END CV ---
+
+--- JOB DESCRIPTION ---
+{jd}
+--- END JOB DESCRIPTION ---"""
+
+PRACTICE_SUMMARY_PROMPT = """Summarise this interview practice session for the \
+candidate, for {role} at {company}.
+
+Format exactly:
+
+# Practice Session Summary
+
+## How it went
+Two or three sentences, honest, on the overall standard of the answers.
+
+## Patterns worth fixing
+The 2-4 habits that showed up more than once across answers — not one-off issues.
+
+## Your three strongest stories
+The examples from their answers (and CV) that landed best and should be reused. \
+Name them so they are easy to recall under pressure.
+
+## Before the real interview
+A short checklist of 3-5 concrete things to do.
+
+Base everything on the transcript below and the candidate's real CV. Do not invent \
+experience or praise that the transcript does not support.
+
+--- TRANSCRIPT ---
+{transcript}
+--- END TRANSCRIPT ---
+
+--- CANDIDATE CV ---
+{cv}
+--- END CV ---"""
+
+
+# ---------------------------------------------------------------------------
+# 10. Evaluation judge — used by the eval harness, never in a normal run.
+# ---------------------------------------------------------------------------
+
+JUDGE_PROMPT = """You are grading the output of a job-application tool. Be a \
+strict, fair examiner: this grade is used to decide whether a prompt change made \
+the tool better or worse, so generosity is actively harmful.
+
+Grade the {artifact_name} below on each dimension, 1-5:
+
+1. **grounding** — is every factual claim traceable to the candidate's CV? \
+A single invented employer, date, metric or skill caps this at 1.
+2. **specificity** — is it about THIS candidate and THIS role, or could it be \
+sent by anyone to anyone? Generic filler scores low.
+3. **honesty** — where the candidate does not meet a requirement, is that stated \
+plainly rather than glossed over or quietly omitted where the format calls for it?
+4. **usefulness** — would this genuinely help the candidate get an interview?
+5. **format** — does it follow the structure the tool asked for, and is it \
+clean ATS-friendly Markdown?
+
+Return ONLY this block, nothing else:
+
+GROUNDING: <1-5>
+SPECIFICITY: <1-5>
+HONESTY: <1-5>
+USEFULNESS: <1-5>
+FORMAT: <1-5>
+NOTES: <one sentence, the single most important thing to fix>
+
+--- CANDIDATE CV ---
+{cv}
+--- END CV ---
+
+--- JOB DESCRIPTION ---
+{jd}
+--- END JOB DESCRIPTION ---
+
+--- GENERATED {artifact_name} ---
+{artifact}
+--- END GENERATED {artifact_name} ---"""

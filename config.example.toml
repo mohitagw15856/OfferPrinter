@@ -54,6 +54,11 @@ formats = ["md", "docx", "pdf"]                        # env: OFFERPRINTER_FORMA
 # file any time. Set false to keep no history at all.
 track = true                                           # env: OFFERPRINTER_TRACK
 
+# Strip your name, email, phone number and profile links before the CV is sent
+# anywhere, and put them back in the generated documents afterwards. The model
+# still sees every employer, date and metric it needs — just not who you are.
+redact = false                                         # env: OFFERPRINTER_REDACT
+
 [generation]
 # Turn any artifact off to spend fewer tokens.
 tailored_cv = true
@@ -72,6 +77,24 @@ fit_score = true
 # than the sum of all of them. Set false if your provider rate-limits hard.
 parallel = true                                        # env: OFFERPRINTER_PARALLEL
 max_workers = 5
+
+# After generating, check every number, date and named entity in the tailored
+# CV and cover letter against your source CV, and cross-check the tailored CV
+# against the ATS report's own list of gaps. Writes fabrication-check.md.
+# This is what turns the no-fabrication promise into something provable, so
+# leave it on unless you have a reason not to.
+verify = true                                          # env: OFFERPRINTER_VERIFY
+
+# Record what tailoring actually changed — reworded bullets, added lines,
+# vocabulary introduced — so you can audit it in thirty seconds.
+# Writes tailoring-diff.md.
+diff = true
+
+# Reuse identical previous responses instead of paying for them again. The key
+# includes the provider, model, temperature and both prompts, so anything that
+# could change the answer correctly misses. Inspect it with
+# `offerprinter cache stats`, empty it with `offerprinter cache clear`.
+cache = true                                           # env: OFFERPRINTER_CACHE
 
 # Optional. Cost reporting uses published list prices, which change and may not
 # match your account. Override any model here, in USD per 1,000,000 tokens.

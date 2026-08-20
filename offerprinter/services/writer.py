@@ -86,6 +86,9 @@ def _combined_markdown(package: ApplicationPackage) -> str:
     if package.fit:
         parts.append(f"\n**Fit score: {package.fit.score}/100 — {package.fit.band}.** ")
         parts.append(f"{package.fit.verdict}\n")
+    if package.verification is not None:
+        mark = "✅" if package.verification.passed else "⚠️"
+        parts.append(f"\n{mark} **Fabrication check:** {package.verification.summary()}\n")
     for artifact in package.artifacts:
         parts.append("\n---\n")
         parts.append(artifact.content.rstrip())
@@ -126,6 +129,26 @@ def write_package(
                 title="Fit Score",
                 filename="fit-score",
                 content=package.fit.as_markdown(),
+            )
+        )
+
+    if package.verification is not None:
+        written["verification"] = write_all(
+            Artifact(
+                key="verification",
+                title="Fabrication Check",
+                filename="fabrication-check",
+                content=package.verification.as_markdown(),
+            )
+        )
+
+    if package.diff:
+        written["diff"] = write_all(
+            Artifact(
+                key="diff",
+                title="What Tailoring Changed",
+                filename="tailoring-diff",
+                content=package.diff,
             )
         )
 
