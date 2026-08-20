@@ -16,8 +16,8 @@ class Offerprinter < Formula
 
   desc "Print a tailored CV, cover letter, fit memo and ATS report from one job description"
   homepage "https://github.com/mohitagw15856/OfferPrinter"
-  url "https://files.pythonhosted.org/packages/0f/b7/24b558790f74f553cee0430ec977057986b6f7ec52b2704d4eeffd8d56fc/offerprinter-0.2.0.tar.gz"
-  sha256 "3340cb2ae5880f3a24a14b16ba7bd4e7a9ba0f8b2fccd90974ce0244daa9496d"
+  url "https://files.pythonhosted.org/packages/21/50/f4d674cfba398c9125aaedb00821e9fe45e5c95f1f2701f4c0614a6e3893/offerprinter-0.3.0.tar.gz"
+  sha256 "809171e1dee7b8e62ffac6f2f6fe436f05d4b7b36981ef27ae7c4c1aeb39ddf4"
   license "MIT"
   head "https://github.com/mohitagw15856/OfferPrinter.git", branch: "main"
 
@@ -70,8 +70,8 @@ class Offerprinter < Formula
   end
 
   resource "lxml" do
-    url "https://files.pythonhosted.org/packages/05/3b/aab6728cae887456f409b4d75e8a01856e4f04bd510de38052a47768b680/lxml-6.1.1.tar.gz"
-    sha256 "ba96ae44888e0185281e937633a743ea90d5a196c6000f82565ebb0580012d40"
+    url "https://files.pythonhosted.org/packages/ad/a9/970b8fa0ecc4fbf1dfaed0d89bbc1fc1421b25ec26a2038c91e872dc6c8e/lxml-6.1.2.tar.gz"
+    sha256 "1055241852f2b02068af4a625a5d32c087db193c12251928af2562ecd2239f18"
   end
 
   resource "markdown-it-py" do
